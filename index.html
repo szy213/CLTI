@@ -67,6 +67,11 @@
             opacity: 0.3;
             cursor: not-allowed;
         }
+        .title {
+    white-space: nowrap; /* 强制不换行 */
+    overflow: hidden;    /* 溢出隐藏 */
+    text-overflow: ellipsis; /* 溢出显示省略号（可选） */
+}
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
@@ -119,7 +124,7 @@
         <!-- 结果屏幕 -->
         <div id="result-screen" class="hidden text-center fade-in">
             <span class="text-stone-400 text-xs tracking-[0.4em] block mb-4">— 心理剪影 —</span>
-            <h2 id="result-title" class="text-4xl font-black text-stone-800 mb-2"></h2>
+            <h2 id="result-title" class="title text-4xl font-black text-stone-800 mb-2"></h2>
             
             <div id="result-quote" class="text-stone-400 italic text-sm mb-8 tracking-wider"></div>
             
