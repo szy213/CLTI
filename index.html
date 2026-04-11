@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陈粒 - 性格测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-green: #f2f5f1;
+            --soft-green: #e6ede4;
+            --accent-green: #6b8e23; /* 橄榄绿 */
+            --ink-black: #2c3e50;
+        }
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: var(--bg-green);
+            color: var(--ink-black);
+            background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .main-container {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(107, 142, 35, 0.1);
+        }
+        .option-card {
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid transparent;
+        }
+        .option-card:hover {
+            background: var(--soft-green);
+            border-color: var(--accent-green);
+            transform: scale(1.02);
+        }
+        .progress-bar {
+            height: 2px;
+            background: #dcdde1;
+            overflow: hidden;
+        }
+        .progress-inner {
+            height: 100%;
+            background: var(--accent-green);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .leaf-pattern {
+            position: fixed;
+            bottom: -50px;
+            right: -50px;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <svg class="leaf-pattern" width="400" height="400" viewBox="0 0 100 100">
+        <path d="M50 0 C70 30 90 40 100 100 C40 90 30 70 0 50 C30 50 40 30 50 0" fill="currentColor"/>
+    </svg>
+
+    <div id="app" class="max-w-xl w-full main-container p-10 md:p-14 rounded-3xl shadow-sm relative overflow-hidden">
+        <div id="start-screen" class="text-center fade-in">
+            <h1 class="text-5xl font-black mb-6 tracking-widest text-stone-800">如也</h1>
+            <div class="h-1 w-12 bg-olive-600 mx-auto mb-8" style="background-color: var(--accent-green);"></div>
+            <div class="space-y-4 mb-12 text-stone-500 leading-loose text-base">
+                <p>世界原本寂静</p>
+                <p>直到妳投下一枚直觉的石子</p>
+                <p>涟漪散开，便是妳的模样</p>
+                <p class="pt-4 italic text-stone-600 text-sm">在这场关于意象的旅行里，妳是陈粒的哪一首歌？</p>
+            </div>
+            <button onclick="startTest()" class="px-10 py-3 border border-stone-800 text-stone-800 rounded-full hover:bg-stone-800 hover:text-white transition-all duration-500 tracking-[0.2em] text-sm">
+                开启洄游
+            </button>
+        </div>
+
+        <div id="test-screen" class="hidden">
+            <div class="mb-10">
+                <div class="flex justify-between items-center mb-3">
+                    <span id="progress-text" class="text-[10px] text-stone-400 tracking-widest uppercase">Sequence 01</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-bar-inner" class="progress-inner" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-10 text-stone-800 leading-relaxed">
+                </h2>
+
+            <div id="options-container" class="space-y-4">
+                </div>
+        </div>
+
+        <div id="result-screen" class="hidden text-center fade-in">
+            <span class="text-stone-400 text-xs tracking-[0.4em] block mb-4">— 心理剪影 —</span>
+            <h2 id="result-title" class="text-4xl font-black text-stone-800 mb-8"></h2>
+            <div id="result-desc" class="text-stone-600 leading-loose mb-12 text-base text-left px-4 border-l border-stone-200">
+                </div>
+            <button onclick="resetTest()" class="text-xs text-stone-400 hover:text-stone-800 transition-colors tracking-widest uppercase underline underline-offset-8">
+                [ 再次洄游 / Re-Start ]
+            </button>
+        </div>
+    </div>
+
+    <script>
+const questions = [
+            {
+                text: "如果有机会见到陈粒，妳最希望是在什么场合？",
+                options: [
+                    { text: "幽闭而梦幻的 Livehouse，近距离感受呼吸", score: { I: 2, F: 1 } },
+                    { text: "万人合唱的巨大演唱会，共同完成某种仪式", score: { E: 2, J: 1 } },
+                    { text: "旷野之中的音乐节，伴着夕阳与烟花狂欢", score: { P: 2, E: 1 } },
+                    { text: "午后转角的街头弹唱，偶遇最本真的旋律", score: { N: 2, S: 1 } }
+                ]
+            },
+            {
+                text: "如果妳可以从过去带走一件具体的物品，妳希望它是？",
+                options: [
+                    { text: "那件衬衣，上面还有梦中莫名的香气", score: { S: 2, F: 1 } },
+                    { text: "一本写满批注的旧书，记录了固执有趣的零星", score: { N: 2, I: 1 } },
+                    { text: "一张合照，定格了我们一刹那的喜欢", score: { E: 2, S: 1 } },
+                    { text: "一捧玫瑰，曾用来装点冷清的窗纱", score: { P: 2, N: 1 } }
+                ]
+            },
+            
+            {
+                text: "如果对爱人说一句话，妳会说？",
+                options: [
+                    { text: "宝贝妳家要打扫，窗帘我已经装好", score: { J: 2, S: 1 } },
+                    { text: "我想要更好更圆的月亮，我想要妳", score: { E:2, F: 1 } },
+                    { text: "赞美妳包容妳都是我的使命，用一生去执行", score: { T: 2, E: 1 } },
+                    { text: "写给妳的情歌是别人听懂了", score: { I: 2, N: 1 } }
+                ]
+            },
+            {
+                text: "如果记忆是一座废弃的影院，妳最想在大银幕上回放的是？",
+                options: [
+                    { text: "走出一粒时夏夜的蝉鸣，和路灯下拉得很长的影子", score: { S: 2, I: 1 } },
+                    { text: "某次写信时没能说出口、如今已无处寄达的话", score: { F: 2, N: 1 } },
+                    { text: "一个人来到音乐节，与舞台上的她视线交错的瞬间", score: { I: 2, P: 1 } },
+                    { text: "在喧闹的歌友会上，与身旁人默契交换的一个眼神", score: { E: 2, J: 1 } }
+                ]
+            },
+            {
+                text: "在一场关于“爱”的辩论中，妳更倾向于认为？",
+                options: [
+                    { text: "爱是相互的尊重，永不恶言相向", score: { T: 2, J: 1 } },
+                    { text: "爱是瞬间的火花，赐我梦境和很快就清醒", score: { F: 2, P: 1 } },
+                    { text: "爱是稳定的生活，做彼此的世界正中", score: { S: 2, J: 1 } },
+                    { text: "爱是灵魂的共振，做ta房间的月亮", score: { N: 2, I: 1 } }
+                ]
+            },
+            {
+                text: "如果生命被浓缩成一个词，妳希望那是？",
+                options: [
+                    { text: "“青原”，作为世界稳定的一部分 ", score: { S: 2, J: 2 } },
+                    { text: "“雨燕”，穿梭在各种未知的可能性里", score: { P: 2, N: 2 } },
+                    { text: "“远辰”，照亮并温暖周围的一方天地", score: { F: 2, E: 1 } },
+                    { text: "“地图”，在复杂中指引正确的方向", score: { T: 2, J: 1 } }
+                ]
+            },
+            {
+                text: "如果用一个季节描述妳的性格，它会是？",
+                options: [
+                    { text: "春的涌动", score: { N: 2, I: 1 } },
+                    { text: "夏夜晚风", score: { F: 2, E: 1 } },
+                    { text: "秋的朦胧", score: { S: 2, T: 1 } },
+                    { text: "一个寒冬", score: { J: 2, S: 1 } }
+                ]
+            },
+            
+           {
+                text: "若要为妳的灵魂挑选一种律动，妳最倾向于？",
+                options: [
+                    { text: "如同《奇妙能力歌》轻吟浅唱的民谣", score: { P: 2, N: 1 } },
+                    { text: "如同《从头》热烈躁动的摇滚", score: { J: 2, S: 1 } },
+                    { text: "如同《浪味仙地》迷幻有趣的电子", score: { I: 2, F: 1 } },
+                    { text: "如同《蓬莱》复杂律动的爵士", score: { T: 2, E: 1 } }
+                ]
+            },
+            {
+                text: "在所有景观中，最令妳感到神往的是？",
+                options: [
+                    { text: "青石河底 翻滚的熔岩", score: { E: 2, P: 1 } },
+                    { text: "莽莽河山 破碎的山巅", score: { I: 2, S: 1 } },
+                    { text: "遥遥星河 之外的蓝天", score: { N: 2, F: 1 } },
+                    { text: "枯灯几盏 了然的寂静", score: { J: 2, T: 1 } }
+                ]
+            },
+            
+            {
+                text: "如果用一句歌词形容妳，妳会选择？",
+                options: [
+                    { text: "“美丽的给我温暖沉默，我不说任由世界涂抹”", score: { F: 2, I: 1 } },
+                    { text: "“有则抱抱，无则笑笑”", score: { T: 2, S: 1 } },
+                    { text: "“她住在七月的洪流上，天台倾倒理想一万丈”", score: { J: 2, T: 1 } },
+                    { text: "“妳像燎原星火，危险地闪烁”", score: { P: 2, N: 1 } }
+                ]
+            },
+            {
+                text: "如果妳能拥有一种奇妙能力，妳希望是？",
+                options: [
+                    { text: "预知未来，从而做出最完美的规划", score: { J: 2, S: 1 } },
+                    { text: "读心术，能瞬间理解每个灵魂的波长", score: { F: 2, I: 1 } },
+                    { text: "操控概率，让世界呈现出自己想要的各种可能", score: { P: 2, N: 1 } },
+                    { text: "洞察万物真理，一眼识破所有的表象与谎言", score: { T: 2, N: 1 } }
+                ]
+            },
+            {
+                text: "最后，妳认为这个世界的真相隐藏在？",
+                options: [
+                    { text: "可以被推导和计算的数学规律中", score: { T: 2, S: 1 } },
+                    { text: "那些只可意会不可言传的感性瞬间里", score: { F: 2, N: 1 } },
+                    { text: "每一次打破陈规、重塑自我的尝试中", score: { P: 2, E: 1 } },
+                    { text: "对秩序的坚守以及对自我的不断修正里", score: { J: 2, I: 1 } }
+                ]
+            }
+        ];
+
+        const results = {
+            "INTJ": { title: "《自渡》", desc: "妳是独行在思想高地的智者。世界对妳而言，是需要解构的精密仪器。妳清冷、笃定，不屑于平庸的赞美，在理性的深海里完成自我的放逐与救赎。" },
+            "INFJ": { title: "《正趣果上果》", desc: "妳是能感知万物悲悯的灵魂。妳习惯用深邃的眼光穿透表象，去触碰那些脆弱的真实。妳是一种寂静的力量，在暗处散发着柔和而坚定的光芒。" },
+            "ENTP": { title: "《桥豆麻袋》", desc: "妳是逻辑丛林里的顽童，最爱推倒名为“规则”的墙。妳的思维跳跃如电，热衷于发现世界的裂隙。对妳来说，枯燥才是唯一的罪名。" },
+            "ENFP": { title: "《U.U》", desc: "妳是永远热情的理想主义者，眼中藏着星辰与大海。妳赋予日常以浪漫的注解，每一次心动都是一场盛大的冒险，妳让周围的世界都变得灵动起来。" },
+            "ISTJ": { title: "《如也》", desc: "妳是时间最忠诚的守护者。妳敬畏秩序，深信细节的力量。在浮躁的时代，妳以一种近乎沉默的坚韧，守住了名为“真实”的疆域。" },
+            "ISFJ": { title: "《芳草地》", desc: "妳是尘世中温润的港湾，承载着每一个细碎的善意。妳的爱不张扬，却像空气一样不可或缺。在妳身边，万物都能找到归属的安宁。" },
+            "ESTJ": { title: "《从头》", desc: "妳是天生的统帅，意志如钢铁般锐利。妳从不畏惧冲突，只在意结果与效率。妳用一种无可撼动的秩序感，去开辟属于妳的领土。" },
+            "ESFJ": { title: "《世界正中》", desc: "妳是社交图谱中最温暖的色块。妳乐于编织连接他人的纽带，在每一个欢庆或失落的瞬间，妳总是那个最先伸出双手的人。" },
+            "ISTP": { title: "《爱若》", desc: "妳是冷静的匠人，也是不羁的行者。妳用最小的力撬动最大的变数。妳不爱表达，却能用行动击穿虚伪，在自由的野性中自得其乐。" },
+            "ISFP": { title: "《多多流意》", desc: "妳是游走在感官边缘的艺术家。妳对美有一种本能的敏锐，在那些无声的瞬间，妳用内心的调色盘描绘世界。妳的一半是克制，一半是澎湃。" },
+            "ESTP": { title: "《大梦》", desc: "妳是烈火，是狂风，是永远不肯停歇的能量。妳享受感官的极致，在每一次竞争与博弈中，妳都能以最漂亮的姿态稳操胜券。" },
+            "ESFP": { title: "《飞松》", desc: "妳是生活舞台上永恒的焦点。妳热爱当下的每一滴快乐，用最真实的情绪去回应世界的喧嚣。对妳而言，精彩地活着就是唯一的正事。" },
+            "INTP": { title: "《和平鸽》", desc: "妳是思维废墟上的建筑师，在抽象的领域里建造城堡。妳疏离、客观，永远在追问“为什么”。妳内心的火种，只为逻辑的火花而燃。" },
+            "INFP": { title: "《奇妙能力歌》", desc: "妳是怀揣童话在沙漠独行的朝圣者。妳对真实有着近乎偏执的渴望，即便世界满目疮痍，妳依然能在废墟里种出一朵属于自己的玫瑰。" },
+            "ENTJ": { title: "《雨燕》", desc: "妳是野心与智慧的结合体。妳目标如炬，气场如虹。妳不仅渴望成功，更渴望定义成功的标准。在妳面前，阻碍只是进化的踏板。" },
+            "ENFJ": { title: "《远辰》", desc: "妳是能感召众人的引路者。妳不仅能看到每个人的潜能，更能给他们以温暖的指引。妳用博大的爱，在群体中构建出一片理想的星空。" }
+        };
+
+        let currentQuestion = 0;
+        let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+
+        function startTest() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            const optionsContainer = document.getElementById('options-container');
+            
+            document.getElementById('question-text').innerText = q.text;
+            document.getElementById('progress-text').innerText = `Sequence ${currentQuestion + 1} / 12`;
+            document.getElementById('progress-bar-inner').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+
+            optionsContainer.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-card w-full p-5 text-left text-sm tracking-wide rounded-xl fade-in';
+                btn.style.animationDelay = `${idx * 0.1}s`;
+                btn.innerText = opt.text;
+                btn.onclick = () => selectOption(opt.score);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(score) {
+            for (let key in score) {
+                scores[key] += score[key];
+            }
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const mbti = 
+                (scores.E >= scores.I ? 'E' : 'I') +
+                (scores.N >= scores.S ? 'N' : 'S') +
+                (scores.F >= scores.T ? 'F' : 'T') +
+                (scores.P >= scores.J ? 'P' : 'J');
+            
+            const result = results[mbti] || results["INFP"];
+            document.getElementById('result-title').innerText = result.title;
+            document.getElementById('result-desc').innerText = result.desc;
+        }
+
+        function resetTest() {
+            currentQuestion = 0;
+            scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
