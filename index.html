@@ -35,11 +35,16 @@
             transition: all 0.3s ease;
             background: rgba(255, 255, 255, 0.5);
             border: 1px solid transparent;
+            cursor: pointer;
         }
         .option-card:hover {
             background: var(--soft-green);
             border-color: var(--accent-green);
-            transform: scale(1.02);
+        }
+        .option-card.selected {
+            background: var(--soft-green);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 1px var(--accent-green);
         }
         .progress-bar {
             height: 2px;
@@ -58,28 +63,41 @@
             opacity: 0.05;
             pointer-events: none;
         }
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .title {
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
+    <!-- 背景音乐 -->
+    <audio id="bgm" src="bgm.mp3" loop></audio>
+
     <svg class="leaf-pattern" width="400" height="400" viewBox="0 0 100 100">
         <path d="M50 0 C70 30 90 40 100 100 C40 90 30 70 0 50 C30 50 40 30 50 0" fill="currentColor"/>
     </svg>
 
     <div id="app" class="max-w-xl w-full main-container p-10 md:p-14 rounded-3xl shadow-sm relative overflow-hidden">
+        <!-- 初始屏幕 -->
         <div id="start-screen" class="text-center fade-in">
-            <h1 class="text-5xl font-black mb-6 tracking-widest text-stone-800">如也</h1>
+            <h1 class="text-5xl font-black mb-6 tracking-widest text-stone-800">CLTI</h1>
             <div class="h-1 w-12 bg-olive-600 mx-auto mb-8" style="background-color: var(--accent-green);"></div>
             <div class="space-y-4 mb-12 text-stone-500 leading-loose text-base">
                 <p>世界原本寂静</p>
                 <p>直到妳投下一枚直觉的石子</p>
                 <p>涟漪散开，便是妳的模样</p>
-                <p class="pt-4 italic text-stone-600 text-sm">在这场关于意象的旅行里，妳是陈粒的哪一首歌？</p>
+                <p class="pt-4 italic text-stone-600 text-xs sm:text-sm whitespace-nowrap">在这场意象的旅行里，妳是陈粒的哪首歌？</p>
+                <p class="pt-4 italic text-stone-600 text-xs sm:text-sm whitespace-nowrap">（建议佩戴耳机）</p>
             </div>
             <button onclick="startTest()" class="px-10 py-3 border border-stone-800 text-stone-800 rounded-full hover:bg-stone-800 hover:text-white transition-all duration-500 tracking-[0.2em] text-sm">
                 开启洄游
             </button>
         </div>
 
+        <!-- 测试屏幕 -->
         <div id="test-screen" class="hidden">
             <div class="mb-10">
                 <div class="flex justify-between items-center mb-3">
@@ -90,18 +108,36 @@
                 </div>
             </div>
             
-            <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-10 text-stone-800 leading-relaxed">
-                </h2>
+            <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-10 text-stone-800 leading-relaxed"></h2>
 
-            <div id="options-container" class="space-y-4">
-                </div>
+            <div id="options-container" class="space-y-4 mb-12"></div>
+
+            <div class="flex justify-between items-center pt-6 border-t border-stone-100">
+                <button id="prev-btn" onclick="prevQuestion()" class="text-[10px] tracking-[0.2em] text-stone-400 hover:text-stone-800 transition-all uppercase">
+                    [ Prev / 上一题 ]
+                </button>
+                <button id="next-btn" onclick="nextQuestion()" class="text-[10px] tracking-[0.2em] text-stone-800 hover:text-stone-600 transition-all uppercase font-bold">
+                    [ Next / 下一题 ]
+                </button>
+            </div>
         </div>
 
+        <!-- 结果屏幕 -->
         <div id="result-screen" class="hidden text-center fade-in">
             <span class="text-stone-400 text-xs tracking-[0.4em] block mb-4">— 心理剪影 —</span>
-            <h2 id="result-title" class="text-4xl font-black text-stone-800 mb-8"></h2>
-            <div id="result-desc" class="text-stone-600 leading-loose mb-12 text-base text-left px-4 border-l border-stone-200">
-                </div>
+            <h2 id="result-title" class="title text-4xl font-black text-stone-800 mb-2"></h2>
+            
+            <div id="result-quote" class="text-stone-400 italic text-sm mb-8 tracking-wider whitespace-pre-line"></div>
+            
+            <div id="result-desc" class="text-stone-600 leading-loose mb-10 text-base text-left px-4 border-l border-stone-200"></div>
+            
+            <div class="mb-12">
+                <a id="music-link" href="#" target="_blank" class="inline-flex items-center px-6 py-2 border border-stone-300 text-stone-500 rounded-full hover:border-stone-800 hover:text-stone-800 transition-all duration-300 text-[10px] tracking-[0.2em] uppercase">
+                    <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
+                    在网易云打开
+                </a>
+            </div>
+
             <button onclick="resetTest()" class="text-xs text-stone-400 hover:text-stone-800 transition-colors tracking-widest uppercase underline underline-offset-8">
                 [ 再次洄游 / Re-Start ]
             </button>
@@ -109,7 +145,7 @@
     </div>
 
     <script>
-const questions = [
+        const questions = [
             {
                 text: "如果有机会见到陈粒，妳最希望是在什么场合？",
                 options: [
@@ -128,7 +164,6 @@ const questions = [
                     { text: "一捧玫瑰，曾用来装点冷清的窗纱", score: { P: 2, N: 1 } }
                 ]
             },
-            
             {
                 text: "如果对爱人说一句话，妳会说？",
                 options: [
@@ -174,8 +209,7 @@ const questions = [
                     { text: "一个寒冬", score: { J: 2, S: 1 } }
                 ]
             },
-            
-           {
+            {
                 text: "若要为妳的灵魂挑选一种律动，妳最倾向于？",
                 options: [
                     { text: "如同《奇妙能力歌》轻吟浅唱的民谣", score: { P: 2, N: 1 } },
@@ -193,7 +227,6 @@ const questions = [
                     { text: "枯灯几盏 了然的寂静", score: { J: 2, T: 1 } }
                 ]
             },
-            
             {
                 text: "如果用一句歌词形容妳，妳会选择？",
                 options: [
@@ -224,28 +257,36 @@ const questions = [
         ];
 
         const results = {
-            "INTJ": { title: "《自渡》", desc: "妳是独行在思想高地的智者。世界对妳而言，是需要解构的精密仪器。妳清冷、笃定，不屑于平庸的赞美，在理性的深海里完成自我的放逐与救赎。" },
-            "INFJ": { title: "《正趣果上果》", desc: "妳是能感知万物悲悯的灵魂。妳习惯用深邃的眼光穿透表象，去触碰那些脆弱的真实。妳是一种寂静的力量，在暗处散发着柔和而坚定的光芒。" },
-            "ENTP": { title: "《桥豆麻袋》", desc: "妳是逻辑丛林里的顽童，最爱推倒名为“规则”的墙。妳的思维跳跃如电，热衷于发现世界的裂隙。对妳来说，枯燥才是唯一的罪名。" },
-            "ENFP": { title: "《U.U》", desc: "妳是永远热情的理想主义者，眼中藏着星辰与大海。妳赋予日常以浪漫的注解，每一次心动都是一场盛大的冒险，妳让周围的世界都变得灵动起来。" },
-            "ISTJ": { title: "《如也》", desc: "妳是时间最忠诚的守护者。妳敬畏秩序，深信细节的力量。在浮躁的时代，妳以一种近乎沉默的坚韧，守住了名为“真实”的疆域。" },
-            "ISFJ": { title: "《芳草地》", desc: "妳是尘世中温润的港湾，承载着每一个细碎的善意。妳的爱不张扬，却像空气一样不可或缺。在妳身边，万物都能找到归属的安宁。" },
-            "ESTJ": { title: "《从头》", desc: "妳是天生的统帅，意志如钢铁般锐利。妳从不畏惧冲突，只在意结果与效率。妳用一种无可撼动的秩序感，去开辟属于妳的领土。" },
-            "ESFJ": { title: "《世界正中》", desc: "妳是社交图谱中最温暖的色块。妳乐于编织连接他人的纽带，在每一个欢庆或失落的瞬间，妳总是那个最先伸出双手的人。" },
-            "ISTP": { title: "《爱若》", desc: "妳是冷静的匠人，也是不羁的行者。妳用最小的力撬动最大的变数。妳不爱表达，却能用行动击穿虚伪，在自由的野性中自得其乐。" },
-            "ISFP": { title: "《多多流意》", desc: "妳是游走在感官边缘的艺术家。妳对美有一种本能的敏锐，在那些无声的瞬间，妳用内心的调色盘描绘世界。妳的一半是克制，一半是澎湃。" },
-            "ESTP": { title: "《大梦》", desc: "妳是烈火，是狂风，是永远不肯停歇的能量。妳享受感官的极致，在每一次竞争与博弈中，妳都能以最漂亮的姿态稳操胜券。" },
-            "ESFP": { title: "《飞松》", desc: "妳是生活舞台上永恒的焦点。妳热爱当下的每一滴快乐，用最真实的情绪去回应世界的喧嚣。对妳而言，精彩地活着就是唯一的正事。" },
-            "INTP": { title: "《和平鸽》", desc: "妳是思维废墟上的建筑师，在抽象的领域里建造城堡。妳疏离、客观，永远在追问“为什么”。妳内心的火种，只为逻辑的火花而燃。" },
-            "INFP": { title: "《奇妙能力歌》", desc: "妳是怀揣童话在沙漠独行的朝圣者。妳对真实有着近乎偏执的渴望，即便世界满目疮痍，妳依然能在废墟里种出一朵属于自己的玫瑰。" },
-            "ENTJ": { title: "《雨燕》", desc: "妳是野心与智慧的结合体。妳目标如炬，气场如虹。妳不仅渴望成功，更渴望定义成功的标准。在妳面前，阻碍只是进化的踏板。" },
-            "ENFJ": { title: "《远辰》", desc: "妳是能感召众人的引路者。妳不仅能看到每个人的潜能，更能给他们以温暖的指引。妳用博大的爱，在群体中构建出一片理想的星空。" }
+            "INTJ": { title: "《自渡》", link: "https://music.163.com/song?id=421563717", quote: "人生不能太过圆满\n求而不得未必是遗憾", desc: "妳是独行在思想高地的智者。世界对妳而言，是需要解构的精密仪器。妳清冷、笃定，不屑于平庸的赞美，在理性的深海里完成自我的放逐与救赎。" },
+            "INFJ": { title: "《正趣果上果》", link: "https://music.163.com/song?id=30431370", quote: "本欲歃血定风月\n乌飞兔走光阴只负尾生约", desc: "妳是能感知万物悲悯的灵魂。妳习惯用深邃的眼光穿透表象，去触碰那些脆弱的真实。妳是一种寂静的力量，在暗处散发着柔和而坚定的光芒。" },
+            "ENTP": { title: "《桥豆麻袋》", link: "https://music.163.com/song?id=421563713", quote: "一步一步小心翼翼\n一不小心爱上妳", desc: "妳是逻辑丛林里的顽童，最爱推倒名为“规则”的墙。妳的思维跳跃如电，热衷于发现世界的裂隙。对妳来说，枯燥才是唯一的罪名。" },
+            "ENFP": { title: "《U.U》", link: "https://music.163.com/song?id=2066755290", quote: "希望妳活成诗\n喝喜欢的橙汁", desc: "妳是永远热情的理想主义者，眼中藏着星辰与大海。妳赋予日常以浪漫的注解，每一次心动都是一场盛大的冒险，妳让周围的世界都变得灵动起来。" },
+            "ISTJ": { title: "《如也》", link: "https://music.163.com/song?id=30431374", quote: "空泛的想念的假的\n假的组成我了", desc: "妳是时间最忠诚的守护者。妳敬畏秩序，深信细节的力量。在浮躁的时代，妳以一种近乎沉默的坚韧，守住了名为“真实”的疆域。" },
+            "ISFJ": { title: "《芳草地》", link: "https://music.163.com/song?id=421563711", quote: "眼里停泊着万家灯火\n嘴唇艳不过酉时日落", desc: "妳是尘世中温暖的港湾，承载着每一个细碎的善意。妳的爱不张扬，却像空气一样不可或缺。在妳身边，万物都能找到归属的安宁。" },
+            "ESTJ": { title: "《从头》", link: "https://music.163.com/song?id=1308818167", quote: "大海倒在我的怀抱\n猛兽载我奔跑", desc: "妳是天生的统帅，意志如钢铁般锐利。妳从不畏惧冲突，只在意结果与效率。妳用一种无可撼动的秩序感，去开辟属于妳的领土。" },
+            "ESFJ": { title: "《世界正中》", link: "https://music.163.com/song?id=1465290031", quote: "宝贝明天会更好\n悲伤洗个热水澡", desc: "妳是社交图谱中最温暖的色块。妳乐于编织连接他人的纽带，在每一个欢庆或失落的瞬间，妳总是那个最先伸出双手的人。" },
+            "ISTP": { title: "《超认真嬉戏》", link: "https://music.163.com/song?id=1380261068", quote: "有时似懂非懂一脸江湖\n有时两手空空焉知非福", desc: "妳是冷静的匠人，也是不羁的行者。妳用最小的力撬动最大的变数。妳不爱表达，却能用行动击穿虚伪，在自由的野性中自得其乐。" },
+            "ISFP": { title: "《多多流意》", link: "https://music.163.com/song?id=1374217739", quote: "天真无邪\n爱上整个世界", desc: "妳是游走在感官边缘的艺术家。妳对美有一种本能的敏锐，在那些无声的瞬间，妳用内心的调色盘描绘世界。妳的一半是克制，一半是澎湃。" },
+            "ESTP": { title: "《大梦》", link: "https://music.163.com/song?id=421563715", quote: "双手托住奔啸巨河\n不知来处不见尽头", desc: "妳是烈火，是狂风，是永远不肯停歇的能量。妳享受感官的极致，在每一次竞争与博弈中，妳都能以最漂亮的姿态稳操胜券。" },
+            "ESFP": { title: "《飞松》", link: "https://music.163.com/song?id=2066755272", quote: "这大自然好大\n就万事如意吧", desc: "妳是生活舞台上永恒的焦点。妳热爱当下的每一滴快乐，用最真实的情绪去回应世界的喧嚣。对妳而言，精彩地活着就是唯一的正事。" },
+            "INTP": { title: "《和平鸽》", link: "https://music.163.com/song?id=1966823775", quote: "我是不合时宜的泪点\n落在皆大欢喜的庆典", desc: "妳是思维废墟上的建筑师，在抽象的领域里建造城堡。妳疏离、客观，永远在追问“为什么”。妳内心的火种，只为逻辑的火花而燃。" },
+            "INFP": { title: "《奇妙能力歌》", link: "https://music.163.com/song?id=30431366", quote: "我想要更好更圆的月亮\n想要未知的疯狂", desc: "妳是怀揣童话在沙漠独行的朝圣者。妳对真实有着近乎偏执的渴望，即便世界满目疮痍，妳依然能在废墟里种出一朵属于自己的玫瑰。" },
+            "ENTJ": { title: "《雨燕》", link: "https://music.163.com/song?id=1956154173", quote: "当尽头将一切收割\n而我们存活", desc: "妳是野心与智慧的结合体。妳目标如炬，气场如虹。妳不仅渴望成功，更渴望定义成功的标准。在妳面前，阻碍只是进化的踏板。" },
+            "ENFJ": { title: "《远辰》", link: "https://music.163.com/song?id=33525647", quote: "但愿这漫长渺小人生\n不负妳每个光辉时分", desc: "妳是能感召众人的引路者。妳不仅能看到每个人的潜能，更能给他们以温暖的指引。妳用博大的爱，在群体中构建出一片理想的星空。" }
         };
 
         let currentQuestion = 0;
-        let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+        let selections = new Array(questions.length).fill(null);
+        const bgm = document.getElementById('bgm');
 
         function startTest() {
+            // 播放音乐
+            if (bgm) {
+                bgm.play().catch(e => console.log("Audio play prevented by browser, but user interaction should allow it."));
+            }
+            
+            currentQuestion = 0;
+            selections.fill(null);
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('test-screen').classList.remove('hidden');
@@ -255,26 +296,49 @@ const questions = [
         function showQuestion() {
             const q = questions[currentQuestion];
             const optionsContainer = document.getElementById('options-container');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
             
             document.getElementById('question-text').innerText = q.text;
-            document.getElementById('progress-text').innerText = `Sequence ${currentQuestion + 1} / 12`;
+            document.getElementById('progress-text').innerText = `Sequence ${String(currentQuestion + 1).padStart(2, '0')} / ${questions.length}`;
             document.getElementById('progress-bar-inner').style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
 
             optionsContainer.innerHTML = '';
             q.options.forEach((opt, idx) => {
                 const btn = document.createElement('button');
                 btn.className = 'option-card w-full p-5 text-left text-sm tracking-wide rounded-xl fade-in';
+                if (selections[currentQuestion] === idx) {
+                    btn.classList.add('selected');
+                }
                 btn.style.animationDelay = `${idx * 0.1}s`;
                 btn.innerText = opt.text;
-                btn.onclick = () => selectOption(opt.score);
+                btn.onclick = () => selectOption(idx);
                 optionsContainer.appendChild(btn);
             });
+
+            prevBtn.style.visibility = currentQuestion === 0 ? 'hidden' : 'visible';
+            nextBtn.innerText = currentQuestion === questions.length - 1 ? '[ Result / 查看结果 ]' : '[ Next / 下一题 ]';
+            
+            updateNextButtonState();
         }
 
-        function selectOption(score) {
-            for (let key in score) {
-                scores[key] += score[key];
-            }
+        function selectOption(index) {
+            selections[currentQuestion] = index;
+            const cards = document.querySelectorAll('.option-card');
+            cards.forEach((card, i) => {
+                if (i === index) card.classList.add('selected');
+                else card.classList.remove('selected');
+            });
+            updateNextButtonState();
+        }
+
+        function updateNextButtonState() {
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = selections[currentQuestion] === null;
+        }
+
+        function nextQuestion() {
+            if (selections[currentQuestion] === null) return;
             if (currentQuestion < questions.length - 1) {
                 currentQuestion++;
                 showQuestion();
@@ -283,7 +347,22 @@ const questions = [
             }
         }
 
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
         function showResult() {
+            const scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+            selections.forEach((choiceIndex, qIndex) => {
+                const score = questions[qIndex].options[choiceIndex].score;
+                for (let key in score) {
+                    scores[key] += score[key];
+                }
+            });
+
             document.getElementById('test-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
 
@@ -295,12 +374,27 @@ const questions = [
             
             const result = results[mbti] || results["INFP"];
             document.getElementById('result-title').innerText = result.title;
+            
+            const quoteEl = document.getElementById('result-quote');
+            if (result.quote) {
+                quoteEl.innerText = result.quote;
+                quoteEl.style.display = 'block';
+            } else {
+                quoteEl.style.display = 'none';
+            }
+
             document.getElementById('result-desc').innerText = result.desc;
+            
+            const musicLink = document.getElementById('music-link');
+            if (result.link) {
+                musicLink.href = result.link;
+                musicLink.parentElement.style.display = 'block';
+            } else {
+                musicLink.parentElement.style.display = 'none';
+            }
         }
 
         function resetTest() {
-            currentQuestion = 0;
-            scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('start-screen').classList.remove('hidden');
         }
